@@ -89,7 +89,7 @@ impl SlidingWindowRateLimiter {
 
 impl RateLimiter for SlidingWindowRateLimiter {
     /// Wait with an implied cost of 1, see the [initial example](#example-simple-rate-limiter)
-    async fn wait_until_ready(&mut self) {
+    async fn wait_until_ready(&self) {
         let permit = self
             .permits
             .clone()
@@ -138,7 +138,7 @@ impl VariableCostRateLimiter for SlidingWindowRateLimiter {
     ///     println!("Heavy: {:?}", Instant::now());
     /// }
     /// ```
-    async fn wait_with_cost(&mut self, cost: usize) {
+    async fn wait_with_cost(&self, cost: usize) {
         let permits = self
             .permits
             .clone()
@@ -160,7 +160,7 @@ mod tests {
 
         #[tokio::test]
         async fn test_proceeds_immediately_below_limit() {
-            let mut limiter = SlidingWindowRateLimiter::new(Duration::from_secs(3), 7);
+            let limiter = SlidingWindowRateLimiter::new(Duration::from_secs(3), 7);
 
             let start = Instant::now();
 
@@ -180,7 +180,7 @@ mod tests {
         async fn test_waits_at_limit() {
             pause();
 
-            let mut limiter = SlidingWindowRateLimiter::new(Duration::from_secs(1), 3);
+            let limiter = SlidingWindowRateLimiter::new(Duration::from_secs(1), 3);
 
             let start = Instant::now();
 
@@ -210,7 +210,7 @@ mod tests {
                 let limiter_clone = Arc::new(tokio::sync::Mutex::new(limiter.clone()));
 
                 let task = tokio::spawn(async move {
-                    let mut limiter = limiter_clone.lock().await;
+                    let limiter = limiter_clone.lock().await;
 
                     (*limiter).wait_until_ready().await;
                 });
@@ -235,7 +235,7 @@ mod tests {
 
         #[tokio::test]
         async fn test_proceeds_immediately_below_limit() {
-            let mut limiter = SlidingWindowRateLimiter::new(Duration::from_secs(3), 7);
+            let limiter = SlidingWindowRateLimiter::new(Duration::from_secs(3), 7);
 
             let start = Instant::now();
 
@@ -255,7 +255,7 @@ mod tests {
         async fn test_waits_at_limit() {
             pause();
 
-            let mut limiter = SlidingWindowRateLimiter::new(Duration::from_secs(1), 3);
+            let limiter = SlidingWindowRateLimiter::new(Duration::from_secs(1), 3);
 
             let start = Instant::now();
 
@@ -276,9 +276,9 @@ mod tests {
             pause();
 
             let permits = Arc::new(Semaphore::new(5));
-            let mut limiter1 =
+            let limiter1 =
                 SlidingWindowRateLimiter::new_with_permits(Duration::from_secs(2), permits.clone());
-            let mut limiter2 =
+            let limiter2 =
                 SlidingWindowRateLimiter::new_with_permits(Duration::from_secs(2), permits.clone());
 
             let start = Instant::now();
@@ -308,7 +308,7 @@ mod tests {
                 let limiter_clone = Arc::new(tokio::sync::Mutex::new(limiter.clone()));
 
                 let task = tokio::spawn(async move {
-                    let mut limiter = limiter_clone.lock().await;
+                    let limiter = limiter_clone.lock().await;
 
                     (*limiter).wait_with_cost(3).await;
                 });

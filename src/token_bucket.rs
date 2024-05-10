@@ -77,7 +77,7 @@ impl VariableCostRateLimiter for TokenBucketRateLimiter {
     /// }
     /// ```
     ///
-    async fn wait_with_cost(&mut self, cost: usize) {
+    async fn wait_with_cost(&self, cost: usize) {
         let mut state_guard = self.state.lock().await;
         (*state_guard).acquire_tokens(cost).await;
     }
@@ -192,7 +192,7 @@ mod tests {
         pause();
         let state = TokenBucketState::new(10, 3, Duration::from_secs(3));
         let state_mutex = Arc::new(Mutex::new(state));
-        let mut limiter = TokenBucketRateLimiter::new(state_mutex);
+        let limiter = TokenBucketRateLimiter::new(state_mutex);
 
         let start = Instant::now();
 
@@ -214,7 +214,7 @@ mod tests {
 
         let state = TokenBucketState::new(10, 2, Duration::from_secs(3));
         let state_mutex = Arc::new(Mutex::new(state));
-        let mut limiter = TokenBucketRateLimiter::new(state_mutex);
+        let limiter = TokenBucketRateLimiter::new(state_mutex);
 
         let start = Instant::now();
 
@@ -234,7 +234,7 @@ mod tests {
 
         let state = TokenBucketState::new(10, 2, Duration::from_secs(3));
         let state_mutex = Arc::new(Mutex::new(state));
-        let mut limiter = TokenBucketRateLimiter::new(state_mutex);
+        let limiter = TokenBucketRateLimiter::new(state_mutex);
 
         // bucket should not accumulate more than max tokens when not in use
         sleep(Duration::from_secs(180)).await;
@@ -257,7 +257,7 @@ mod tests {
 
         let state = TokenBucketState::new(10, 100, Duration::from_secs(3));
         let state_mutex = Arc::new(Mutex::new(state));
-        let mut limiter = TokenBucketRateLimiter::new(state_mutex);
+        let limiter = TokenBucketRateLimiter::new(state_mutex);
 
         // bucket should not accumulate more than max tokens when not in use, and
         // replacing a large amount should not over-drain the permits Vec and panic
@@ -289,7 +289,7 @@ mod tests {
             let task_mutex = state_mutex.clone();
 
             let task = tokio::spawn(async move {
-                let mut limiter = TokenBucketRateLimiter::new(task_mutex);
+                let limiter = TokenBucketRateLimiter::new(task_mutex);
                 limiter.wait_with_cost(5).await;
             });
             tasks.push(task);
